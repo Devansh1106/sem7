@@ -1,3 +1,5 @@
+# Inspired from repo: https://github.com/cpraveen/numpde/blob/master/bvp2d/bvp2da.py 
+
 """
 Poisson solving: -Laplace(u) = f
                     u = 0
@@ -39,7 +41,7 @@ Ix, Iy = eye(mx), eye(my)
 A = -kron(Iy, Dxx) - kron(Dyy, Ix) # fact from numerical analysis (tensor product notation)
 
 # rhs vector
-b = zeros((mx,my))
+b = zeros((mx,my))      # loops can be avoided altogether by using X,Y whenever needed
 for j in range(1,my+1):
     for i in range(1,mx+1):
         b[i-1,j-1] = f(x[i],y[j])
@@ -47,7 +49,7 @@ for j in range(1,my+1):
 b = reshape(b, mx*my, order='F')
 
 # uexact calculation
-uexact_ = zeros((nx,ny))
+uexact_ = zeros((nx,ny))    # loops can be avoided altogether by using X,Y whenever needed
 for j in range(1,my+1):
     for i in range(1,mx+1):
         uexact_[i,j] = f(x[i],y[j])
@@ -75,6 +77,5 @@ plt.title("Error")
 cs = plt.contourf(X,Y, abs(u-uexact_), levels=30)
 plt.colorbar(cs)
 plt.xlabel("x"); plt.ylabel("y")
-
 
 plt.show()
