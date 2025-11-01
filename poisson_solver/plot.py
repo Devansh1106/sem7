@@ -8,8 +8,8 @@ xmin, xmax = 0.0, 1.0
 ymin, ymax = 0.0, 1.0
 
 # Mesh size
-nx = 10
-ny = 10
+nx = 6
+ny = 6
 mx = nx-2; my = ny-2
 
 dx, dy = (xmax-xmin)/(nx-1), (ymax-ymin)/(ny-1)
@@ -26,6 +26,8 @@ uexact_ = zeros((nx,ny))    # loops can be avoided altogether by using X,Y whene
 for j in range(1,my+1):
     for i in range(1,mx+1):
         uexact_[i,j] = uexact(x[i],y[j])
+
+# print(uexact_)
 print('Max error = ', abs(sol-uexact_).max())
 
 

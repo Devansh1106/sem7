@@ -1,5 +1,3 @@
-
-
 # Solving: -Laplace(u) = 1 in (0,1) × (0,1)
 #                     u = 0 on x = 0, ∀ y
 #                     ∂u/∂η = 0 on x = 1, ∀ y  (first trying for all dirichlet condition)
