@@ -4,7 +4,7 @@ Solve 2d poisson using sparse, direct solver
   -Laplace(u) = f
            u  = 0
 """
-from numpy import sin,pi,linspace,meshgrid,zeros,ones,reshape,abs
+from numpy import sin,pi,linspace,meshgrid,zeros,ones,reshape,abs,savetxt
 from scipy.sparse import spdiags,eye,kron
 from scipy.sparse.linalg import spsolve
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ xmin, xmax = 0.0, 1.0
 ymin, ymax = 0.0, 1.0
 
 # Mesh size
-nx, ny = 50, 50
+nx, ny = 6, 6
 
 dx, dy = (xmax-xmin)/(nx-1), (ymax-ymin)/(ny-1)
 x = linspace(xmin,xmax,nx)
@@ -49,6 +49,16 @@ sol = spsolve(A,b)
 u = zeros((nx,ny)) # Already contains boundary condition
 u[1:-1,1:-1] = reshape(sol,(mx,my),order='F')
 print('Max error = ', abs(u-uexact(X,Y)).max())
+
+with open('cp.txt', 'w') as f:
+  savetxt(f, A.toarray())
+  f.write("\n")
+  savetxt(f, b)
+  f.write("\n")
+  savetxt(f, u)
+  f.write("\n")
+  savetxt(f, uexact(X,Y))
+
 
 # Contour plot solution
 plt.figure(figsize=(5,5))

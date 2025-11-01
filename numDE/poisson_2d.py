@@ -39,6 +39,8 @@ Dyy = (1.0/dy**2) * diags([ones(my), -2.0*ones(my), ones(my)], [-1,0,1],(my,my))
 Ix, Iy = eye(mx), eye(my)
 
 A = -kron(Iy, Dxx) - kron(Dyy, Ix) # fact from numerical analysis (tensor product notation)
+print(Dxx)
+# print(Ix)
 
 # rhs vector
 b = zeros((mx,my))      # loops can be avoided altogether by using X,Y whenever needed
@@ -52,7 +54,7 @@ b = reshape(b, mx*my, order='F')
 uexact_ = zeros((nx,ny))    # loops can be avoided altogether by using X,Y whenever needed
 for j in range(1,my+1):
     for i in range(1,mx+1):
-        uexact_[i,j] = f(x[i],y[j])
+        uexact_[i,j] = uexact(x[i],y[j])
 
 # uexact_ = reshape(uexact_, mx*my, order='F')
 
