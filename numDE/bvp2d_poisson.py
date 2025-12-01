@@ -1,11 +1,13 @@
 # Taken from Prof. Praveen repo: https://github.com/cpraveen/numpde/blob/master/bvp2d/bvp2da.py
+# Modified it so that it can be taken as a reference for my code.
 """
 Solve 2d poisson using sparse, direct solver
   -Laplace(u) = f
            u  = 0
 """
+import numpy as np
 from numpy import sin,pi,linspace,meshgrid,zeros,ones,reshape,abs,savetxt
-from scipy.sparse import spdiags,eye,kron
+from scipy.sparse import spdiags,eye,kron, find
 from scipy.sparse.linalg import spsolve
 import matplotlib.pyplot as plt
 
@@ -50,14 +52,24 @@ u = zeros((nx,ny)) # Already contains boundary condition
 u[1:-1,1:-1] = reshape(sol,(mx,my),order='F')
 print('Max error = ', abs(u-uexact(X,Y)).max())
 
-with open('cp.txt', 'w') as f:
-  savetxt(f, A.toarray())
-  f.write("\n")
-  savetxt(f, b)
-  f.write("\n")
-  savetxt(f, u)
-  f.write("\n")
-  savetxt(f, uexact(X,Y))
+# --------------------- i entered later (start)-----------------------
+rows, cols, values = find(A)
+
+with open('cp.txt', 'w') as file:
+  # savetxt(f, A.toarray())
+  file.write(f"{mx:d} {len(rows):d}\n")
+  for r, c, v in zip(rows, cols, values):
+    file.write(f"{r+1:d} {c+1:d} {v:.6f}\n")
+  savetxt(file, b, fmt='%.6f')
+  file.write("\n")
+  savetxt(file, u, fmt='%.6f')
+  file.write("\n")
+  savetxt(file, uexact(X,Y), fmt='%.6f')
+  file.write("\n")
+  # savetxt(f, A.toarray(), fmt='%.6f')
+  savetxt(file, abs(u-uexact(X,Y)))
+
+# --------------------- i entered later (end)-----------------------
 
 
 # Contour plot solution
@@ -65,6 +77,7 @@ plt.figure(figsize=(5,5))
 plt.title("Solution")
 plt.contour(X,Y,u,20)
 plt.xlabel("x"); plt.ylabel("y")
+plt.savefig("plot_contour.png")
 
 # Color plot error
 plt.figure()
@@ -72,5 +85,6 @@ plt.title("Error")
 cs = plt.contourf(X,Y,abs(u-uexact(X,Y)),levels=30)
 plt.colorbar(cs)
 plt.xlabel("x"); plt.ylabel("y")
+plt.savefig("plot_contourf.png")
 
 plt.show()
