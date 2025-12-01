@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-// #include <string.h>
 #include "mpi.h"
 #include "dmumps_c.h"
 
@@ -9,14 +8,12 @@ int main(int argc, char **argv)
     MUMPS_INT n;
     MUMPS_INT8 len_a;
     DMUMPS_STRUC_C id;
-    // memset(&id, 0, sizeof(id));
-    MUMPS_INT* irn;
-	MUMPS_INT* jcn;
+    int* irn;
+	int* jcn;
 	double* rhs;
 	double* a;
-    int size, error = 0;   // for MPI
+    int size, error = 0, n1;   // for MPI
     MUMPS_INT myid, ierr;
-    int _n, _len_a;
     double start_time = 0.0, end_time = 0.0;
     #define JOB_INIT -1
     #define JOB_END -2
@@ -24,204 +21,114 @@ int main(int argc, char **argv)
 
     ierr = MPI_Init(&argc, &argv);		//MPI initialization
 	ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-    // printf("%d\n", myid);
-    // ierr = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    // id.comm_fortran = MPI_Comm_c2f(MPI_COMM_WORLD);
 
-    // if (myid == 0){                                      // myid == 0 should read the file
-                                                            // and distribute it to every rank
-        FILE *fp = fopen("matrix.txt", "r");
-        if (!fp) { perror("matrix.txt"); exit(1); }
+    if (myid == 0){
+        FILE *fp = fopen("../numDE/cp.txt", "r");
+        if (!fp) { perror("../numDE/cp.txt"); MPI_Abort(MPI_COMM_WORLD, 1); }
 
         // 1. Read n and nnz
-        fscanf(fp, "%d %d", &_n, &_len_a);
-        // printf("%d %d ", n ,len_a);
+        fscanf(fp, "%d %d", &n1, &len_a);
+        n = (n1*n1);
+        
+        // ------------------------ TEST PROBLEM -------------------------------
+        // irn = malloc(2 * sizeof(int));
+        // jcn = malloc(2 * sizeof(int));
+        // a = malloc(2 * sizeof(double));
+        // rhs = malloc(2 * sizeof(double));
+        // irn[0] = 1; irn[1] = 2;
+        // jcn[0] = 1; jcn[1] = 2;
+        // a[0] = 1; a[1] = 2;
+        // rhs[0] = 1; rhs[1] = 4;
+        // n = 2; len_a = 2; n1 = 2;
+
+        // ------------------------- TEST PROBLEM ENDS -------------------------
 
         // 2. Allocate
-        irn = malloc(_len_a * sizeof(int));
-        jcn = malloc(_len_a * sizeof(int));
-        a = malloc(_len_a * sizeof(double));
-        rhs = malloc(_n *_n * sizeof(double));
-        // printf(sizeof(rhs));
+        irn = malloc(len_a * sizeof(int));
+        jcn = malloc(len_a * sizeof(int));
+        a = malloc(len_a * sizeof(double));
+        rhs = malloc(n * sizeof(double)); // n is already n1*n1
 
-        // 3. Read matrix entries
-        for (int k = 0; k < _len_a; k++){
-            fscanf(fp, "%d %d %lf", &irn[k], &jcn[k], &a[k]);
-            // printf("%d\n", irn[k]);
-            // printf("%d\n", jcn[k]);
-            // printf("%lf\n", a[k]);
+        if (!irn || !jcn || !a || !rhs) {
+            fprintf(stderr, "Host Error: Memory allocation failed.\n");
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
-            // printf("%d\n", rhs[k]);
 
-        // 4. Read RHS
-        // for (int i = 0; i != EOF; i++){
-        //     fscanf(fp, "%lf", &rhs[i]);
-        //     printf("%lf\n", rhs[i]);
-        // }
+        int k = 0;
+        while (k < len_a && fscanf(fp, "%d %d %lf", &irn[k], &jcn[k], &a[k]) == 3){
+            k++;
+        }
+        printf("n, len_a: %d %d\n", n, len_a);
         int i = 0;
-        while (fscanf(fp, "%lf ", &rhs[i]) == 1){
-            // printf("%lf\n", rhs[i]);
+        while (i < n && fscanf(fp, "%lf\n", &rhs[i]) == 1){
             i++;
         }
-
-        // while (fscanf(fp, " %lf,", &val) == 1) { 
-        //     rhs
-
+            
         fclose(fp);
-        if (myid == 0) {printf("File reading done!");}
-        // printf("%d\n", irn[1]);
-        // printf("%d\n", jcn[1]);
-        // printf("%d\n", a[1]);
-        // printf("%lf\n", rhs[3]);
+        printf("File reading done!");
+    } // myid == 0
 
-    // }
-    // else{
-    //     irn = NULL;
-    //     jcn = NULL;
-    //     a = NULL;
-    //     rhs = NULL;
-    // }
-
+    //record the start time
 	if (myid == 0){
-        // for (int i = 0; i < 16; i++){
-            // printf("%lf\n", rhs[i]);
-        // }
         start_time = MPI_Wtime();
-    }		//record the start time
+    }
 
     id.comm_fortran = USE_COMM_WORLD;
 	id.par = 1; id.sym = 0;
 	id.job = JOB_INIT;
     dmumps_c(&id);
-    
-    n = _n * _n;
-    len_a = _len_a;
-    // printf("%d %d\n", n, len_a);
-	// if (myid == 0){
-        //     for (int i = 0; i < n; i++){
-            //         printf("%lf\n", rhs[i]);
-            //     }
-            //     // start_time = MPI_Wtime();
-            // }	
-    
+  
     
     // define the problem on host
 	if(myid == 0)
 	{
-        // // printf("%lf\n", irn[7]);
-        // for (int i = 0; i < n; i++){
-        //         printf("%lf\n", rhs[i]);
-        //     }
-        id.n = n; id.nnz = len_a; id.irn=irn; id.jcn = jcn;         // in 2D system size is n x n !!!
+        id.n = n; id.nnz = len_a;
+        id.irn = irn; id.jcn = jcn;
 		id.a = a; id.rhs = rhs;
-        // if (myid == 0){ printf("%lf\n", id.rhs[4]);}
-        // printf("%lf\n", id.rhs[4]);
 	}
 	#define ICNTL(I) icntl[(I)-1] 
-    // id.ICNTL(21) = 0;
 	id.ICNTL(1) = 6; id.ICNTL(2) = 6; id.ICNTL(3) = 6; id.ICNTL(4) = 0;//Supressing error msgs
+    id.ICNTL(18) = 0; id.ICNTL(5) = 0;
 
-	// if (myid == 0){
-    //     for (int i = 0; i < n; i++){
-    //         printf("%d\n", i);
-    //         printf("%lf\n", id.rhs[i]);
-    //     }
-    //     // start_time = MPI_Wtime();
-    // }	
+    
 	//Call the MUMPS package (analyze , factorization and solve)
-    id.job = 6;
+    id.job = 6;             // combined 1,2,3 jobs
     dmumps_c(&id);
-	// id.job = 1;         // combine job=1,2,3
-	// dmumps_c(&id);
-    // id.job = 2;         // combine job=1,2,3
-	// dmumps_c(&id);
-    // id.job = 3;         // combine job=1,2,3
-	// dmumps_c(&id);
 
-    // if (myid == 0){ printf("%lf\n", id.rhs[4]);}
-
-
-    // error printing
 	if (id.infog[0] < 0)
 	{
 		printf("(PROC %d) ERROR RETURN: \tINFOG(1)= %d\n\t\t\t\tINFOG(2)= %d\n",
 		myid, id.infog[0], id.infog[1]);
 		error = 1;
 	}
-    // else{
-    //     if (myid == 0){printf("%lf\n", rhs[1]);}
-    // }
 
 	// Terminate instance
 	id.job = JOB_END;
 	dmumps_c(&id);
 
-    // if (myid == 0)
-    // {
-    //     if (!error){
-            // stop_time = MPI_Wtime();
-            // return rhs, start_time - stop_time;
-    //     }
-    //     else{
-    //         printf("Error!, not able to return rhs.")
-    //         stop_time = MPI_Wtime();
-    //         return -1, start_time - stop_time;
-    //     }
-    // }
     if (myid  == 0)
-    {
+    {   
         end_time = MPI_Wtime();
         printf("Time Taken = %lf\n", (end_time - start_time));
-        // printf("%lf", &rhs[1]);
         FILE *fp1 = fopen("sol.txt", "w");
         if (!fp1) { perror("sol.txt"); exit(1); }
     
-        // // 4. Write sol
-        // for (int i = 0; i < n*n; i++){
-        //     fprintf(fp1, "%lf ", rhs[i]);
-        // }
-        // Writing 2D solution back
-        // FILE *fp1 = fopen("sol.txt", "w");
-        for (int i = 0; i < n; i++){
-            printf("%lf ", rhs[i]);
-        }
-        for (int j = 0; j < _n; j++) {
-            for (int i = 0; i < _n; i++) {
-                fprintf(fp1, "%lf ", rhs[i * _n + j]);
+        printf("sol:\n");
+        for (int j = 0; j < n1; j++) {
+            for (int i = 0; i < n1; i++) {
+                fprintf(fp1, "%.17e ", rhs[i * n1 + j]);
             }
             fprintf(fp1, "\n");
         }
 
         fclose(fp1);
         printf("Solution is in sol.txt file!");
-
         free(irn);
         free(jcn);
         free(a);
         free(rhs);
     }
-
     ierr = MPI_Finalize();
     return 0;
 
 }
-
-// double* say_hi(double *a){
-//     printf("hi, Solution");
-//     for(size_t i = 0; i < 2; i++)
-//         a[i] = a[i] + 1;
-//     return a;
-// }
-
-
-
-
-// // Writing 2D solution back
-// FILE *fp1 = fopen("sol.txt", "w");
-// for (int j = 0; j < n; j++) {
-//     for (int i = 0; i < n; i++) {
-//         fprintf(fp1, "%lf ", rhs[i * n + j]);
-//     }
-//     fprintf(fp1, "\n");
-// }
-// fclose(fp1);
