@@ -1,14 +1,14 @@
 
 # This is a simple makefile just to build PROG
-#COMP_FLAGS = -O0 -ggdb3 -fsanitize=address
+COMP_FLAGS = -O0 -ggdb3 # -fsanitize=address
 
-COMP_FLAGS = -O3
+#COMP_FLAGS = -O3
 
 # DEF_FLAGS_CPP  = $(COMP_FLAGS) -mcmodel=small	-Wall	-g -Wextra
 
 DEF_FLAGS_CC = $(COMP_FLAGS) 
 
-# CPP := gcc $(DEF_FLAGS_CPP)
+# CPP := g++ $(DEF_FLAGS_CPP)
 
 CC := mpicc $(DEF_FLAGS_CC)
 
@@ -16,9 +16,9 @@ CC := mpicc $(DEF_FLAGS_CC)
 
 DIR_SRC_CC:= $(wildcard *.c)
 
-CFLAGS = -I /home/devansh/MUMPS_5.5.1/include	# While running on your local system, change it with location where MUMPS has been stored.
+CFLAGS = -I /home/devansh/MUMPS_5.8.1/include	# While running on your local system, change it with location where MUMPS has been stored.
 
-PROG_CPP   = main_c
+PROG_CPP   = main_cpp
 
 ####################################################################
 # Lines from here to down should not be changed. They are the actual
@@ -27,12 +27,11 @@ PROG_CPP   = main_c
 
 all: $(PROG_CPP)
 
-# OBJS_CPP = $(DIR_SRC_CPP:%.c=%.o) #$(DIR_SRC_CPP:%.cpp=%.o)
+# OBJS_CPP = $(DIR_SRC_CPP:%.cpp=%.o) #$(DIR_SRC_CPP:%.c=%.o)
 OBJS_MPI = $(DIR_SRC_CC:%.c=%.o)
-$(PROG_CPP): $(OBJS_MPI) # $(OBJS_CPP)
-	mpicc -o $(PROG_CPP) $(OBJS_MPI) $(CFLAGS) -ldmumps -lmumps_common -lpord -lmetis -lscotch -lscotcherr -lmpi
-	rm -f *.o $(OBJS_MPI) 
-# $(OBJS_CPP)	; make sure the above linkers are installed on your system (-lmumps , -lmpi etc.)
+$(PROG_CPP): $(OBJS_MPI)
+	$(CC) -fopenmp	-o $(PROG_CPP) $(OBJS_MPI) $(CFLAGS) -ldmumps -lmumps_common -lpord -lmetis -lesmumps -lscotch -lscotcherr -lscalapack -llapack -lblas -lmpi -lmpi_mpifh -lgfortran -lm
+	rm -f *.o $(OBJS_MPI)	# make sure the above linkers are installed on your system (-lmumps , -lmpi etc.)
 
 run : all
 	./$(PROG_CPP)
