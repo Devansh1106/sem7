@@ -1,11 +1,13 @@
-using MUMPS, MPI, SparseArrays, LinearAlgebra, PyPlot
-# Solving: -Laplace(u) = 1 in (0,1) × (0,1)
+# Created by: Devansh Tripathi (github.com/Devansh1106)
+# Created at: UTC+05:30 23:23 
+
+# Solving: -Laplace(u) = sin(2.0*π*x) * sin(2.0*π*y)  in (0,1) × (0,1)
 #                     u = 0 on x = 0, ∀ y
-#                     ∂u/∂η = 0 on x = 1, ∀ y  (first trying for all dirichlet condition)
+#                     u = 0 on x = 1, ∀ y
 #                     u = 0 on y = 0, ∀ x
 #                     u = 0 on y = 1, ∀ x
-
-# using Plots.PlotMeasures # for "mm" support in plotting
+# Exact sol: 1.0/(2.0*(2.0*π)^2) * sin(2.0*π*x) * sin(2.0*π*y)
+using MUMPS, MPI, SparseArrays, LinearAlgebra, PyPlot
 
 # ------------- MPI Initialization -----------------
 MPI.Init()
@@ -75,7 +77,6 @@ if (rank !== 0)
 end
 
 @time begin 
-    # ----------------------------- MPI PART -----------------------------
     A = MPI.bcast(A, comm, root = 0)
     rhs = MPI.bcast(rhs, comm, root = 0)
     println("Broadcasting done from rank 0.")
